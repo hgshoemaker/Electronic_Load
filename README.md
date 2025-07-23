@@ -2,6 +2,16 @@
 
 A programmable electronic load controller built with Arduino, featuring constant current, constant resistance, and constant power modes. This project provides precise control for testing power supplies, batteries, and other DC sources.
 
+## Credits
+
+This project is based on the excellent **ELECTRONOOBS Electronic Load** design and tutorial. Original design and code by **ELECTRONOOBS**.
+
+- 🌐 **Website:** [www.electronoobs.com](https://www.electronoobs.com)
+- 📺 **YouTube:** [ELECTRONOOBS Channel](https://www.youtube.com/c/ELECTRONOOBS)
+- 💾 **Original Project:** [Electronic Load Tutorial](https://www.electronoobs.com)
+
+Special thanks to ELECTRONOOBS for sharing this amazing project with the maker community!
+
 ## Features
 
 - **Three Operating Modes:**
