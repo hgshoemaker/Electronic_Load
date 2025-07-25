@@ -56,6 +56,15 @@ void isr0 ()  {
   up = (digitalRead(clk) == digitalRead(dt));
 }
 
+// Forward declarations for screen functions
+void screen0();
+void screen1();
+void screen2();
+void screen3();
+void screen4();
+void screen5();
+void screen6();
+
 void setup() {
   lcd.init();
   lcd.backlight();
