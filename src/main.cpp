@@ -78,22 +78,22 @@ float mW_setpoint = 0;
 int dac_value = 0;
 
 /////////////////////////////////////////////////////////////IMPORTANT//////////////////////////////////////////////////////////////////
-/*This part is important. You see, when you sue the ADS1115, to pass from bit values (0 to 65000), we use a multiplier
-  By default that is "0.185mv" or "0.000185V". In the code, to measure current, we make a differential measurement of the voltage
-  on the "1ohm" load. Since the load is 1ohm, that will give us DIRECTLY the current value since "I = V/R" and R is 1.
-  BUT!!! The resistor is not exactly 1ohm, so in my case I've adapted the multiplier to 0.0001827. You might need to adjust this
-  variable to other values till you get good readings, so while measuring the value with an external multimeter at the same time,
-  adjust this variable till you get good results. */
-const float multiplier = 0.0001827;     //Multiplier used for "current" read between ADC0 and ADC1 of the ADS1115    
+/*This part is important. You see, when you use the ADS1115, to pass from bit values (0 to 65000), we use a multiplier
+  By default with GAIN_TWOTHIRDS that is "0.1875mV" or "0.0001875V". In the code, to measure current, we make a differential 
+  measurement of the voltage on the "1ohm" load. Since the load is 1ohm, that will give us DIRECTLY the current value since 
+  "I = V/R" and R is 1. BUT!!! The resistor is not exactly 1ohm, so in my case I've adapted the multiplier to 0.0001827. 
+  You might need to adjust this variable to other values till you get good readings, so while measuring the value with an 
+  external multimeter at the same time, adjust this variable till you get good results. */
+const float multiplier = 0.0001875;     //Multiplier used for "current" read between ADC0 and ADC1 of the ADS1115 with GAIN_TWOTHIRDS    
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*The same goes here. But in this case, the voltage read is from a voltage divider. You see, the ADS1115 can only measure up to 5V. 
-  If the input is higer it will get damaged. So, for that btween the ADS1115 and the main input I've used a 10K and 100K divider and 
-  that will equal to a divider of 0.0909090. So, now the multiplier is 0.000185 / 0.0909090 = 0.002035
-  Now these resistor values are not perfect neighter so we don't have exactly 10K and 100K, that's why my multiplier for voltage read
-  is 0.0020645. Just do the same, measure the voltage on the LCD screen and also with an external multimiter and adjust this value till you get 
-  good results. I've measure the resistors but that's not enough. We need precise values. */
-const float multiplier_A2 = 0.0020645;   //Multiplier for voltage read from the 10K/100K divider
+/*The same goes here. But in this case, the voltage read is from a voltage divider. You see, the ADS1115 can only measure up to 6.144V 
+  with GAIN_TWOTHIRDS. If the input is higher it will get damaged. So, for that between the ADS1115 and the main input I've used a 10K 
+  and 100K divider and that will equal to a divider of 0.0909090. So, now the multiplier is 0.0001875 / 0.0909090 = 0.002063
+  Now these resistor values are not perfect neither so we don't have exactly 10K and 100K, that's why my multiplier for voltage read
+  is 0.0020645. Just do the same, measure the voltage on the LCD screen and also with an external multimeter and adjust this value till you get 
+  good results. I've measured the resistors but that's not enough. We need precise values. */
+const float multiplier_A2 = 0.002063;   //Multiplier for voltage read from the 10K/100K divider with GAIN_TWOTHIRDS
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -135,14 +135,14 @@ void setup() {
 
   
   ads.begin();      //Start i2c communication with the ADC
-  // The following lines are removed because ADS1015_REG_CONFIG_MODE_CONTIN is undefined and not needed for basic operation.
-  // ads.startComparator_SingleEnded(2, ADS1015_REG_CONFIG_MODE_CONTIN);
-  // ads.startComparator_SingleEnded(3, ADS1015_REG_CONFIG_MODE_CONTIN);
+  ads.setGain(GAIN_TWOTHIRDS);  // +/- 6.144V range (for differential measurements)
+  // Configure for differential mode between AIN0 and AIN1
+  // The readADC_Differential_0_1() function will use this configuration
   delay(10);
 
-  dac.begin(0x60);  //Start i2c communication with the DAC (slave address sometimes can be 0x60, 0x61 or 0x62)
+  dac.begin(0x61);  //Start i2c communication with the DAC (slave address sometimes can be 0x60, 0x61 or 0x62)
   delay(10);
-  dac.setVoltage(0, false); //Set DAC voltage output ot 0V (MOSFET turned off)
+  dac.setVoltage(0, false); //Set DAC voltage output to 0V (MOSFET turned off)
   delay(10);
    
   previousMillis = millis();
