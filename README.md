@@ -1,40 +1,56 @@
-# Arduino Electronic Load - Simplified Version
+# Arduino Electronic Load
 
-A clean and intuitive programmable electronic load controller built with Arduino. Features constant current and constant power modes with a streamlined menu-driven interface using a rotary encoder and LCD display.
+A programmable electronic load controller built with Arduino, featuring constant current, constant resistance, and constant power modes. This project provides precise control for testing power supplies, batteries, and other DC sources.
+
+## Credits
+
+This project is based on the excellent **ELECTRONOOBS Electronic Load** design and tutorial. Original design and code by **ELECTRONOOBS**.
+
+- 🌐 **Website:** [www.electronoobs.com](https://www.electronoobs.com)
+- 📺 **YouTube:** [ELECTRONOOBS Channel](https://www.youtube.com/c/ELECTRONOOBS)
+- 💾 **Original Project:** [Electronic Load Tutorial](https://www.electronoobs.com)
+
+Special thanks to ELECTRONOOBS for sharing this amazing project with the maker community!
 
 ## Features
 
-- **Two Operating Modes:**
+- **Three Operating Modes:**
+  - Constant Load (Resistance) Mode
+  - Constant Current Mode  
   - Constant Power Mode
-  - Constant Current Mode
-- **Rotary Encoder Navigation** with intuitive menu system
-- **16x2 LCD Display** with custom arrow characters
-- **Real-time Monitoring** of voltage, current, and power
-- **Simple Interface** - easy to use and understand
-- **Precise Control** using 16-bit ADC and 12-bit DAC
-- **Fast Response** with optimized control loops
+- **Interactive Menu System** with rotary encoder navigation
+- **16x2 LCD Display** with custom characters
+- **Pause/Resume Functionality** 
+- **Precise ADC readings** using ADS1115 16-bit ADC
+- **DAC Control** using MCP4725 12-bit DAC
+- **Audio Feedback** with buzzer tones
 
 ## Hardware Requirements
 
 ### Components
-- Arduino Nano/Uno
+- Arduino (Uno/Nano recommended)
 - **ADS1115** - 16-bit I2C ADC module
 - **MCP4725** - 12-bit I2C DAC module  
-- **16x2 LCD with I2C backpack** (address 0x27)
+- **16x2 LCD with I2C backpack**
 - **Rotary Encoder** with push button
-- **Current sense resistor** for load measurement
-- **Voltage divider** for input voltage sensing
+- **Push buttons** (2x - menu and pause/resume)
+- **Buzzer** for audio feedback
+- **1Ω current sense resistor** (precision resistor recommended)
+- **Voltage divider** (10kΩ/100kΩ) for voltage sensing
 - **Power MOSFET** for load control
 
 ### Pin Connections
 
 | Component | Arduino Pin | Notes |
 |-----------|-------------|-------|
-| Encoder CLK | D2 | Clock pin with interrupt |
-| Encoder DT | D3 | Data pin |
-| Encoder SW | D4 | Push button with pullup |
-| LCD | I2C (A4/A5) | Address: 0x27 |
-| ADS1115 | I2C (A4/A5) | Address: 0x48 (default) |
+| Buzzer | D3 | Audio feedback |
+| Encoder SW | D8 | Push button |
+| Encoder DT | D9 | Data pin |
+| Encoder CLK | D10 | Clock pin |
+| Red Button | D11 | Pause/Resume |
+| Blue Button | D12 | Menu/Back |
+| LCD | I2C (A4/A5) | Address: 0x3F or 0x27 |
+| ADS1115 | I2C (A4/A5) | Address: 0x48 |
 | MCP4725 | I2C (A4/A5) | Address: 0x60 |
 
 ## Software Dependencies
@@ -52,72 +68,64 @@ Wire (built-in)
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/hgshoemaker/Electronic_Load.git
+   git clone https://github.com/yourusername/Electronic_Load.git
    ```
 
 2. **Install required libraries** in Arduino IDE
 
 3. **Open** `src/main.cpp` in Arduino IDE or PlatformIO
 
-4. **Configure I2C address** if needed:
-   - LCD: Line 7 - Change `0x27` to `0x3F` if your display uses that address
+4. **Configure I2C addresses** if needed:
+   - LCD: Line 6 - Change `0x3f` to `0x27` if needed
+   - ADS1115: Uses `0x48` (configured in setup)
+   - MCP4725: Uses `0x60` (configured in setup)
 
 5. **Upload** to your Arduino
-
-## Usage
-
-### Menu Navigation
-- **Rotate encoder** to navigate between options
-- **Press encoder** to select/enter menus
-- **Navigate through** power and current setting screens
-
-### Main Menu
-```
-> Const. Power
-  Const. Current
-```
-
-### Operating Modes
-
-#### 1. Constant Power Mode
-1. Select "Const. Power" from main menu
-2. Press encoder to enter power setting
-3. Rotate encoder to adjust power value (±0.1W increments)
-4. Press encoder to confirm and start power mode
-5. Monitor real-time power, voltage display
-6. Press encoder to stop and return to menu
-
-#### 2. Constant Current Mode  
-1. Select "Const. Current" from main menu
-2. Press encoder to enter current setting
-3. Rotate encoder to adjust current value (±0.1A increments)
-4. Press encoder to confirm and start current mode
-5. Monitor real-time current, voltage display
-6. Press encoder to stop and return to menu
-
-### Display Information
-- **Setting Screen:** Shows target value with up/down indicator
-- **Active Mode:** 
-  - **Top line:** Setpoint and input voltage
-  - **Bottom line:** Actual measured values
 
 ## Calibration
 
 ### Current Reading Calibration
-Adjust the multiplier constants in the code for your specific hardware:
-
+The current is measured across a 1Ω sense resistor. Adjust the multiplier on **line 76**:
 ```cpp
-// In currentmode section (around line 95)
-curcurrent = ads.readADC_Differential_0_1() * 0.1875 / 1000.00 / 0.0975;
+const float multiplier = 0.0001827;
 ```
+Compare LCD readings with an external multimeter and adjust this value for accuracy.
 
 ### Voltage Reading Calibration  
+Voltage is measured through a 10kΩ/100kΩ divider. Adjust the multiplier on **line 84**:
 ```cpp
-// In powermode section (around line 125)
-curvoltage = ads.readADC_SingleEnded(2) * 0.1875 * 11.13 / 1000.00;
+const float multiplier_A2 = 0.0020645;
 ```
+Measure actual voltage with a multimeter and adjust for precision.
 
-Compare LCD readings with an external multimeter and adjust the multiplier values for accuracy.
+## Usage
+
+### Menu Navigation
+- **Rotate encoder** to navigate menu options
+- **Press encoder** to select/confirm
+- **Blue button** to go back/cancel
+- **Red button** to pause/resume operation
+
+### Operating Modes
+
+#### 1. Constant Load Mode
+- Set desired resistance value (0.000001 - 9.999999 Ω)
+- Load maintains constant resistance regardless of input voltage
+- Useful for testing voltage regulation
+
+#### 2. Constant Current Mode  
+- Set desired current (0-9999 mA)
+- Load draws constant current regardless of input voltage
+- Ideal for battery capacity testing
+
+#### 3. Constant Power Mode
+- Set desired power (0-99999 mW) 
+- Load consumes constant power
+- Good for thermal testing and power supply evaluation
+
+### Display Information
+- **Top line:** Setpoint value and input voltage
+- **Bottom line:** Actual current, power, and pause status
 
 ## Safety Considerations
 
@@ -125,19 +133,19 @@ Compare LCD readings with an external multimeter and adjust the multiplier value
 - Ensure proper heat sinking for the power MOSFET
 - Monitor component temperatures during operation
 - Use appropriate fuses and protection circuits
-- Start with low power loads for testing
-- Verify all connections before applying power
+- Verify voltage divider ratings for your input voltage range
+- Test with low power loads before high-power operation
 
 ## Technical Specifications
 
-- **Current Control:** Variable based on sense resistor and MOSFET ratings
-- **Power Control:** Variable based on input voltage and current limits  
-- **Control Resolution:** 12-bit DAC (4096 steps)
-- **Measurement Resolution:** 16-bit ADC (ADS1115)
-- **Update Rate:** Fast response with 100μs delays in control loops
-- **Display Update:** Real-time during operation
+- **Current Range:** 0-4000+ mA (depends on MOSFET and sense resistor)
+- **Voltage Range:** 0-50V+ (limited by voltage divider and ADS1115)  
+- **Power Range:** 0-200W+ (depends on cooling and MOSFET ratings)
+- **Resolution:** 12-bit DAC control (4096 steps)
+- **ADC Resolution:** 16-bit (ADS1115)
+- **Update Rate:** 300ms (configurable)
 
-## Code Structure
+## File Structure
 
 ```
 Electronic_Load/
@@ -150,48 +158,8 @@ Electronic_Load/
 ├── test/
 │   └── README            # Test directory
 ├── platformio.ini        # PlatformIO configuration
-├── LICENSE              # MIT License
 └── README.md            # This file
 ```
-
-### Key Functions
-
-- `setup()` - Initialize hardware and display
-- `loop()` - Main control loop with mode handling
-- `screen0()` to `screen6()` - Display functions for different menu screens
-- `isr0()` - Rotary encoder interrupt handler
-- `ISR(PCINT2_vect)` - Button interrupt handler
-
-## Control Algorithm
-
-- **Incremental DAC adjustment** based on error magnitude
-- **Real-time feedback** using differential ADC measurements
-- **Smooth control** with microsecond timing
-- **Automatic limiting** to prevent DAC overflow
-
-## Troubleshooting
-
-### Common Issues
-
-**Display not working:**
-- Check I2C address (try 0x3F if 0x27 doesn't work)
-- Verify wiring connections
-- Run I2C scanner to detect devices
-
-**Encoder not responding:**
-- Check pin connections (D2, D3, D4)
-- Verify encoder wiring and pullup resistors
-- Test encoder with multimeter
-
-**No load control:**
-- Verify MCP4725 connections and address
-- Check MOSFET gate connection to DAC output
-- Test DAC output with multimeter
-
-**Incorrect readings:**
-- Calibrate multiplier values in code
-- Check sense resistor connections
-- Verify voltage divider values
 
 ## Contributing
 
@@ -207,15 +175,39 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- Arduino community for excellent libraries
-- Adafruit for robust I2C sensor libraries
-- Electronic load design inspiration from various open-source projects
+- Based on ELECTRONOOBS Electronic Load design
+- Uses Adafruit libraries for I2C communication
+- Inspired by commercial electronic load designs
+
+## Troubleshooting
+
+### Common Issues
+
+**LCD not displaying:**
+- Check I2C address (try 0x27 if 0x3F doesn't work)
+- Verify wiring connections
+- Run I2C scanner to detect devices
+
+**Incorrect readings:**
+- Calibrate multiplier values
+- Check sense resistor value and connections
+- Verify voltage divider ratios
+
+**No encoder response:**
+- Check pin connections (D9, D10)  
+- Verify encoder wiring
+- Test with multimeter for continuity
+
+**DAC not controlling load:**
+- Verify MCP4725 I2C address
+- Check MOSFET gate connection
+- Test DAC output with multimeter
 
 ## Version History
 
-- **v2.0** - Complete rewrite with simplified menu system
-- **v1.0** - Initial complex menu-driven version
+- **v1.0** - Initial release with basic functionality
+- More versions to be added...
 
 ---
 
-**⚡ Simple, Clean, Effective! ⚡**
+**⚡ Happy Testing! ⚡**
