@@ -80,11 +80,11 @@ int dac_value = 0;
 /////////////////////////////////////////////////////////////IMPORTANT//////////////////////////////////////////////////////////////////
 /*This part is important. You see, when you use the ADS1115, to pass from bit values (0 to 65000), we use a multiplier
   By default with GAIN_TWOTHIRDS that is "0.1875mV" or "0.0001875V". In the code, to measure current, we make a differential 
-  measurement of the voltage on the "1ohm" load. Since the load is 1ohm, that will give us DIRECTLY the current value since 
-  "I = V/R" and R is 1. BUT!!! The resistor is not exactly 1ohm, so in my case I've adapted the multiplier to 0.0001827. 
+  measurement of the voltage on the "0.1ohm" load. Since the load is 0.1ohm, current = voltage / 0.1 = voltage * 10. 
+  The base multiplier 0.0001875V needs to be multiplied by 10 to get current directly.
   You might need to adjust this variable to other values till you get good readings, so while measuring the value with an 
   external multimeter at the same time, adjust this variable till you get good results. */
-const float multiplier = 0.0001875;     //Multiplier used for "current" read between ADC0 and ADC1 of the ADS1115 with GAIN_TWOTHIRDS    
+const float multiplier = 0.1875;     //Multiplier used for "current" read between ADC0 and ADC1 of the ADS1115 with GAIN_TWOTHIRDS (0.0001875 * 10 for 0.1ohm resistor)    
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*The same goes here. But in this case, the voltage read is from a voltage divider. You see, the ADS1115 can only measure up to 6.144V 
@@ -151,16 +151,17 @@ void setup() {
 
 void loop() {
   if(!digitalRead(SW_red) && !SW_red_status){
-    push_count_OFF+=1;
-    if(push_count_OFF > 10){  
+    push_count_ON+=1;
+    if(push_count_ON > 10){  
       tone(Buzzer, 1000, 300);          
       pause = !pause;
       SW_red_status = true;
-      push_count_OFF=0;
+      push_count_ON=0;
     }   
   }
   if(digitalRead(SW_red) && SW_red_status){
     SW_red_status = false;
+    push_count_ON = 0;
   }
 
   
@@ -196,19 +197,6 @@ void loop() {
 
     
     
-    if (Rotary_counter <= 4)
-    {
-      Menu_row = 1;
-    }
-    else if (Rotary_counter > 4 && Rotary_counter <= 8)
-    {
-      Menu_row = 2;
-    }
-    else if (Rotary_counter > 8 && Rotary_counter <= 12)
-    {
-      Menu_row = 3;
-    }
-
     if(Rotary_counter < 0)
     {
       Rotary_counter = 0;
@@ -216,6 +204,19 @@ void loop() {
     if(Rotary_counter > 12)
     {
       Rotary_counter = 12;
+    }
+
+    if (Rotary_counter <= 3)
+    {
+      Menu_row = 1;
+    }
+    else if (Rotary_counter > 3 && Rotary_counter <= 7)
+    {
+      Menu_row = 2;
+    }
+    else if (Rotary_counter > 7)
+    {
+      Menu_row = 3;
     }
     
     currentMillis = millis();
@@ -613,8 +614,14 @@ void loop() {
     }
     
     float voltage_on_load, voltage_read, power_read;  
-    voltage_on_load = ads.readADC_Differential_0_1();      //Read DIFFERENTIAL voltage between ADC0 and ADC1. (the load is 1ohm, so this is equal to the current)
-    voltage_on_load = (voltage_on_load * multiplier)*1000;
+    int16_t raw_adc = ads.readADC_Differential_0_1();      //Read DIFFERENTIAL voltage between ADC0 and ADC1
+    
+    // Check for reasonable ADC reading (not floating/disconnected)
+    if(abs(raw_adc) > 32000) {  // If reading is near max range, likely floating
+      voltage_on_load = 0;  // Set to 0 to prevent erratic behavior
+    } else {
+      voltage_on_load = (raw_adc * multiplier)*1000;
+    }
 
     voltage_read = ads.readADC_SingleEnded(2);
     voltage_read = (voltage_read * multiplier_A2);
@@ -707,6 +714,10 @@ void loop() {
     {
       dac_value = 4095;
     }
+    if(dac_value < 0)
+    {
+      dac_value = 0;
+    }
     
   
     
@@ -772,8 +783,14 @@ void loop() {
     
     float voltage_on_load, voltage_read, power_read;
       
-    voltage_on_load = ads.readADC_Differential_0_1();      //Read DIFFERENTIAL voltage between ADC0 and ADC1
-    voltage_on_load = (voltage_on_load * multiplier)*1000;
+    int16_t raw_adc = ads.readADC_Differential_0_1();      //Read DIFFERENTIAL voltage between ADC0 and ADC1
+    
+    // Check for reasonable ADC reading (not floating/disconnected)
+    if(abs(raw_adc) > 32000) {  // If reading is near max range, likely floating
+      voltage_on_load = 0;  // Set to 0 to prevent erratic behavior
+    } else {
+      voltage_on_load = (raw_adc * multiplier)*1000;
+    }
 
     voltage_read = ads.readADC_SingleEnded(2);
     voltage_read = (voltage_read * multiplier_A2);
@@ -866,6 +883,10 @@ void loop() {
     {
       dac_value = 4095;
     }
+    if(dac_value < 0)
+    {
+      dac_value = 0;
+    }
     
   
     if(!pause){
@@ -931,8 +952,14 @@ void loop() {
     
     float voltage_on_load, voltage_read, power_read;
       
-    voltage_on_load = ads.readADC_Differential_0_1();      //Read DIFFERENTIAL voltage between ADC0 and ADC1
-    voltage_on_load = (voltage_on_load * multiplier)*1000;
+    int16_t raw_adc = ads.readADC_Differential_0_1();      //Read DIFFERENTIAL voltage between ADC0 and ADC1
+    
+    // Check for reasonable ADC reading (not floating/disconnected)
+    if(abs(raw_adc) > 32000) {  // If reading is near max range, likely floating
+      voltage_on_load = 0;  // Set to 0 to prevent erratic behavior
+    } else {
+      voltage_on_load = (raw_adc * multiplier)*1000;
+    }
 
     voltage_read = ads.readADC_SingleEnded(2);
     voltage_read = (voltage_read * multiplier_A2);
@@ -1024,6 +1051,10 @@ void loop() {
     if(dac_value > 4095)
     {
       dac_value = 4095;
+    }
+    if(dac_value < 0)
+    {
+      dac_value = 0;
     }
     
   
